@@ -1,0 +1,22 @@
+#!/usr/bin/env groovy
+import groovy.cli.commons.CliBuilder
+
+// Define API
+CliBuilder cli = new CliBuilder(usage: 'Print multiple char-based files to a a single PDF')
+cli.with {
+    h(longOpt: 'help', 'usage information')
+    e(longOpt: 'extensions', args: '+', valueSeparator: ',', 'extensions of the files to be printed')
+    o(longOpt: 'output', 'output filename of the PDF')
+    p(longOpt: 'paths', args: '+', valueSeparator: ',', 'directories to search for the files')
+    r(longOpt: 'recursive', 'recurse sub-directories')
+    _(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation')
+}
+
+// Parse command line arguments
+def options = cli.parse(args)
+
+// Print help message
+if (options.h) {
+    cli.usage()
+    return
+}
