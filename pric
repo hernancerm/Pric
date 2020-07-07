@@ -23,6 +23,7 @@ Map<String, String> ext2type = [
 ]
 
 class PricPDFPrinter {
+    // CLI options
     List<String> extensions
     String outputFilename
     String title
@@ -30,9 +31,12 @@ class PricPDFPrinter {
     boolean recursive
     boolean keepAsciidoc
 
+    // Helper data
+    Map<String, String> ext2type
+
     void print() {
         // Check the file passed by -o is a PDF file
-        if (!isPdfFile(outputFilename)) {
+        if (!outputFilename.endsWith('pdf')) {
             println """\
                 ERROR: File name supplied by -o is not a PDF file.
                        Verify the filename has extension '.pdf'.
@@ -78,15 +82,18 @@ class PricPDFPrinter {
                     String fileExtension =
                             partedFilename.size() > 1 ? partedFilename[1] : ''
                     if (fileExtension in extensions) {
-                        println file.name // TODO: build adoc file
+                        adocFile.withWriterAppend('utf-8') { writer ->
+                            writer.writeLine("""\
+                            [source,${ext2type[fileExtension]}]
+                            ----
+                            include::$file.absolutePath[]
+                            ----
+                            """.stripIndent())
+                        }
                     }
                 }
             }
         }
-    }
-
-    private boolean isPdfFile(String filename) {
-        return filename.endsWith('pdf')
     }
 }
 
@@ -124,7 +131,8 @@ for (def option : requiredOptions) {
 // Build printer
 PricPDFPrinter printer = new PricPDFPrinter(
         extensions: options.es, outputFilename: options.o, title: options.t ?: '',
-        paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.keepAsciidoc
+        paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.keepAsciidoc,
+        ext2type: ext2type
 )
 
 printer.print()
