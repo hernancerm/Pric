@@ -1,6 +1,23 @@
 #!/usr/bin/env groovy
 import groovy.cli.commons.CliBuilder
 
+Map<String, String> ext2type = [
+        // Backend
+        java: 'java',
+        groovy: 'groovy',
+        php: 'php',
+        py: 'python',
+        // Frontend
+        js: 'javascript',
+        html: 'html',
+        css: 'css',
+        // Scripting
+        bat: 'batch',
+        sh: 'bash',
+        // Low level
+        c: 'c'
+]
+
 // Define API
 CliBuilder cli = new CliBuilder(usage: 'Print multiple char-based files to a a single PDF')
 cli.with {
