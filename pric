@@ -18,12 +18,45 @@ Map<String, String> ext2type = [
         c: 'c'
 ]
 
+class PricPDFPrinter {
+    List<String> extensions
+    String outputFilename
+    String title
+    List<String> paths
+    boolean recursive
+    boolean keepAsciidoc
+
+    void print() {
+        // Check the file passed by -o is a PDF file
+        if (!isPdfFile(outputFilename)) {
+            println """\
+                ERROR: File name supplied by -o is not a PDF file.
+                       Verify the filename has extension '.pdf'.
+                """.stripIndent()
+            System.exit(1)
+        }
+
+        // Filename without extension
+        String filenameNoExt = outputFilename.split('[.]')[0]
+
+        // Create AsciiDoc file
+        File asciiDocFile = new File("${filenameNoExt}.adoc")
+        // Set file title
+        asciiDocFile.write("= ${title ?: filenameNoExt}\n\n")
+    }
+
+    private boolean isPdfFile(String filename) {
+        return filename.endsWith('pdf')
+    }
+}
+
 // Define API
 CliBuilder cli = new CliBuilder(usage: 'Print multiple char-based files to a a single PDF')
 cli.with {
     h(longOpt: 'help', 'usage information')
     e(longOpt: 'extensions', args: '+', valueSeparator: ',', '[required] extensions of the files to be printed')
-    o(longOpt: 'output', '[required] output filename of the PDF')
+    o(longOpt: 'output', type: String, '[required] output filename of the PDF')
+    t(longOpt: 'title', type: String, 'title of the document. If omitted, filename -o is used')
     p(longOpt: 'paths', args: '+', valueSeparator: ',', 'directories to search for the files')
     r(longOpt: 'recursive', 'recurse sub-directories')
     _(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation')
@@ -36,7 +69,7 @@ def options = cli.parse(args)
 // Print help message
 if (options.h) {
     cli.usage()
-    return
+    System.exit(0)
 }
 
 // Required options check
@@ -44,6 +77,14 @@ for (def option : requiredOptions) {
     if (!options[option]) {
         println 'ERROR: Missing one or more required options.'
         cli.usage()
-        return
+        System.exit(0)
     }
 }
+
+// Build printer
+PricPDFPrinter printer = new PricPDFPrinter(
+        extensions: options.es, outputFilename: options.o, title: options.t ?: '',
+        paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.keepAsciidoc
+)
+
+printer.print()
