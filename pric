@@ -40,13 +40,49 @@ class PricPDFPrinter {
             System.exit(1)
         }
 
+        buildAdocFile()
+    }
+
+    private void buildAdocFile() {
         // Filename without extension
         String filenameNoExt = outputFilename.split('[.]')[0]
 
         // Create AsciiDoc file
-        File asciiDocFile = new File("${filenameNoExt}.adoc")
+        File adocFile = new File("${filenameNoExt}.adoc")
         // Set file title
-        asciiDocFile.write("= ${title ?: filenameNoExt}\n\n")
+        adocFile.write("= ${title ?: filenameNoExt}\n\n")
+
+        includeFilesInAdoc(recursive, paths ?: ['.'], adocFile)
+    }
+
+    private void includeFilesInAdoc(boolean recursive, List<String> paths, File adocFile) {
+        for (String path : paths) {
+
+            File dir = new File(path)
+            // Fail if path does not exist
+            if (!dir.exists()) {
+                println """\
+                    ERROR: One or more paths supplied do not exist.
+                           Verify the value of the option -p.
+                    """.stripIndent()
+                System.exit(1)
+            }
+
+            // Iterate files and build adoc file
+            dir.eachFile { file ->
+                if (file.isDirectory() && recursive) {
+                    includeFilesInAdoc(recursive, [file.getPath()], adocFile)
+                }
+                if (!file.isDirectory()) {
+                    def partedFilename = file.name.split('[.]')
+                    String fileExtension =
+                            partedFilename.size() > 1 ? partedFilename[1] : ''
+                    if (fileExtension in extensions) {
+                        println file.name // TODO: build adoc file
+                    }
+                }
+            }
+        }
     }
 
     private boolean isPdfFile(String filename) {
