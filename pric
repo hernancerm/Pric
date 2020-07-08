@@ -87,7 +87,11 @@ class PricPDFPrinter {
         Attributes attributes = attributes().sourceHighlighter('coderay').get()
         Options options = options().inPlace(true).backend('pdf').attributes(attributes).get()
 
+        Logger.info('Generating PDF, please wait...')
+
         asciidoctor.convertFile(adocFile, options)
+
+        Logger.info('Successful PDF generation.')
     }
 
     private File buildAdocFile() {
@@ -130,6 +134,8 @@ class PricPDFPrinter {
                     String fileExtension =
                             partedFilename.size() > 1 ? partedFilename[1] : ''
                     if (fileExtension in extensions) {
+                        Logger.info("Adding to ouput file: $file.absolutePath")
+
                         matchedFiles++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""\
