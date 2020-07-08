@@ -8,8 +8,8 @@ import org.asciidoctor.*
 import org.asciidoctor.extension.*
 
 import static org.asciidoctor.Asciidoctor.Factory.create
-import static org.asciidoctor.AttributesBuilder.attributes;
-import static org.asciidoctor.OptionsBuilder.options;
+import static org.asciidoctor.AttributesBuilder.attributes
+import static org.asciidoctor.OptionsBuilder.options
 
 Map<String, String> ext2type = [
         // Backend
@@ -50,7 +50,7 @@ class PricPDFPrinter {
             println """\
                 ERROR: File name supplied by -o is not a PDF file.
                        Verify the filename has extension '.pdf'.
-                """.stripIndent()
+                """.stripIndent().stripTrailing()
             System.exit(1)
         }
         // If it has .pdf extension, generate the PDF file
@@ -98,9 +98,11 @@ class PricPDFPrinter {
                 println """\
                     ERROR: One or more paths supplied do not exist.
                            Verify the value of the option -p.
-                    """.stripIndent()
+                    """.stripIndent().stripTrailing()
                 System.exit(1)
             }
+
+            int matchedFiles = 0
 
             // Iterate files and build adoc file
             dir.eachFile { file ->
@@ -112,6 +114,7 @@ class PricPDFPrinter {
                     String fileExtension =
                             partedFilename.size() > 1 ? partedFilename[1] : ''
                     if (fileExtension in extensions) {
+                        matchedFiles++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""\
                             === $file.name
@@ -123,6 +126,15 @@ class PricPDFPrinter {
                         }
                     }
                 }
+            }
+
+            if (matchedFiles == 0) {
+                println """\
+                    INFO: No files were found.
+                          Check the values of -e and -p (if supplied).
+                    """.stripIndent().stripTrailing()
+                adocFile.delete()
+                System.exit(2)
             }
         }
     }
@@ -191,7 +203,7 @@ class CharBasedIncludeProcessor extends IncludeProcessor {
     private StringBuilder readContent(String target) {
         StringBuilder content = new StringBuilder()
         new File(target).eachLine {line ->
-            content.append(line).append("\n")
+            content.append(line).append('\n')
         }
         return content
     }
