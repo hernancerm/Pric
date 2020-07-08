@@ -46,7 +46,7 @@ class PricPDFPrinter {
 
     void print() {
         // Check the file passed by -o has .pdf extension
-        if (!outputFilename.endsWith('pdf')) {
+        if (!outputFilename.endsWith('.pdf')) {
             println """\
                 ERROR: File name supplied by -o is not a PDF file.
                        Verify the filename has extension '.pdf'.
