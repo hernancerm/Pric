@@ -1,5 +1,14 @@
 #!/usr/bin/env groovy
+@Grab(group='org.asciidoctor', module='asciidoctorj', version='2.3.0')
+@Grab(group='org.asciidoctor', module='asciidoctorj-pdf', version='1.5.3')
+
 import groovy.cli.commons.CliBuilder
+
+import org.asciidoctor.*
+import org.asciidoctor.extension.*
+
+import static org.asciidoctor.Asciidoctor.Factory.create
+import static org.asciidoctor.OptionsBuilder.options
 
 Map<String, String> ext2type = [
         // Backend
@@ -35,7 +44,7 @@ class PricPDFPrinter {
     Map<String, String> ext2type
 
     void print() {
-        // Check the file passed by -o is a PDF file
+        // Check the file passed by -o has .pdf extension
         if (!outputFilename.endsWith('pdf')) {
             println """\
                 ERROR: File name supplied by -o is not a PDF file.
@@ -43,11 +52,28 @@ class PricPDFPrinter {
                 """.stripIndent()
             System.exit(1)
         }
-
-        buildAdocFile()
+        // If it has .pdf extension, generate the PDF file
+        generatePDF(buildAdocFile())
     }
 
-    private void buildAdocFile() {
+    private void generatePDF(File adocFile) {
+        Asciidoctor asciidoctor = create()
+
+        // Add support for include directive
+        asciidoctor.javaExtensionRegistry()
+                .includeProcessor(CharBasedIncludeProcessor)
+
+        // TODO: The source highlighter is put here and then added to the convertFile
+        Attributes attributes = new Attributes()
+
+        Map<String, Object> options = options()
+                .inPlace(true)
+                .backend('pdf')
+                .asMap()
+        asciidoctor.convertFile(adocFile, options)
+    }
+
+    private File buildAdocFile() {
         // Filename without extension
         String filenameNoExt = outputFilename.split('[.]')[0]
 
@@ -57,6 +83,7 @@ class PricPDFPrinter {
         adocFile.write("= ${title ?: filenameNoExt}\n\n")
 
         includeFilesInAdoc(recursive, paths ?: ['.'], adocFile)
+        return adocFile
     }
 
     private void includeFilesInAdoc(boolean recursive, List<String> paths, File adocFile) {
@@ -136,3 +163,32 @@ PricPDFPrinter printer = new PricPDFPrinter(
 )
 
 printer.print()
+
+// Helper class required to support the include directive
+class CharBasedIncludeProcessor extends IncludeProcessor {
+
+    CharBasedIncludeProcessor(Map<String, Object> config) {
+        super(config)
+    }
+
+    @Override
+    // Handling of accepted file types is done in PricPDFPrinter, thus everything
+    // is considered acceptable at this point.
+    boolean handles(String target) { return true }
+
+    @Override
+    void process(org.asciidoctor.ast.Document document, PreprocessorReader reader,
+                 String target, Map<String, Object> attributes) {
+
+        StringBuilder content = readContent(target)
+        reader.push_include(content.toString(), target, target, 1, attributes)
+    }
+
+    private StringBuilder readContent(String target) {
+        StringBuilder content = new StringBuilder()
+        new File(target).eachLine {line ->
+            content.append(line).append("\n")
+        }
+        return content
+    }
+}
