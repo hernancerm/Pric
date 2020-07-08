@@ -134,7 +134,7 @@ class PricPDFPrinter {
                     String fileExtension =
                             partedFilename.size() > 1 ? partedFilename[1] : ''
                     if (fileExtension in extensions) {
-                        Logger.info("Adding to ouput file: $file.absolutePath")
+                        Logger.info("Adding to output file: $file.absolutePath")
 
                         matchedFiles++
                         adocFile.withWriterAppend('utf-8') { writer ->
