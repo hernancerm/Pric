@@ -200,7 +200,7 @@ class Logger {
     final static String WARNING = 'WARNING'
     final static String ERROR = 'ERROR'
 
-    private static String noticeTemplate(String notice) { "[ $notice ]" }
+    private static String noticeTemplate(String notice) { "[$notice]" }
 
     private static void log(String notice, String msg, PrintStream stream) {
         if (enabled) stream.println("${noticeTemplate(notice)} $msg")
