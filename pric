@@ -63,10 +63,8 @@ class PricPDFPrinter {
     void print() {
         // Check the file passed by -o has .pdf extension
         if (!outputFilename.endsWith('.pdf')) {
-            println """\
-                ERROR: File name supplied by -o is not a PDF file.
-                       Verify the filename has extension '.pdf'.
-                """.stripIndent().stripTrailing()
+            Logger.error('File name supplied by -o is not a PDF file. ' +
+                    'Verify the filename has extension \'.pdf\'.')
             System.exit(1)
         }
         // If it has .pdf extension, generate the PDF file
@@ -111,10 +109,8 @@ class PricPDFPrinter {
             File dir = new File(path)
             // Fail if path does not exist
             if (!dir.exists()) {
-                println """\
-                    ERROR: One or more paths supplied do not exist.
-                           Verify the value of the option -p.
-                    """.stripIndent().stripTrailing()
+                Logger.error('One or more paths supplied do not exist. ' +
+                        'Verify the value of the option -p.')
                 System.exit(1)
             }
 
@@ -145,10 +141,7 @@ class PricPDFPrinter {
             }
 
             if (matchedFiles == 0) {
-                println """\
-                    INFO: No files were found.
-                          Check the values of -e and -p (if supplied).
-                    """.stripIndent().stripTrailing()
+                Logger.info('No files were found. Check the values of -e and -p (if supplied).')
                 adocFile.delete()
                 System.exit(2)
             }
@@ -181,7 +174,7 @@ if (options.h) {
 // Required options check
 for (def option : requiredOptions) {
     if (!options[option]) {
-        println 'ERROR: Missing one or more required options.'
+        Logger.error('Missing one or more required options.')
         cli.usage()
         System.exit(0)
     }
