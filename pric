@@ -232,9 +232,7 @@ class Logger {
 // Helper class required to support the include directive
 class CharBasedIncludeProcessor extends IncludeProcessor {
 
-    CharBasedIncludeProcessor(Map<String, Object> config) {
-        super(config)
-    }
+    CharBasedIncludeProcessor(Map<String, Object> config) { super(config) }
 
     @Override
     // Handling of accepted file types is done in PricPDFPrinter, thus everything
@@ -244,16 +242,11 @@ class CharBasedIncludeProcessor extends IncludeProcessor {
     @Override
     void process(org.asciidoctor.ast.Document document, PreprocessorReader reader,
                  String target, Map<String, Object> attributes) {
-
         StringBuilder content = readContent(target)
         reader.push_include(content.toString(), target, target, 1, attributes)
     }
 
     private StringBuilder readContent(String target) {
-        StringBuilder content = new StringBuilder()
-        new File(target).eachLine {line ->
-            content.append(line).append('\n')
-        }
-        return content
+        new StringBuilder(new File(target).text)
     }
 }
