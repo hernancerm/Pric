@@ -54,7 +54,13 @@ class PricPDFPrinter {
             System.exit(1)
         }
         // If it has .pdf extension, generate the PDF file
-        generatePDF(buildAdocFile())
+        File adocFile = buildAdocFile()
+        generatePDF(adocFile)
+
+        // Conditional cleanup
+        if (!keepAsciidoc) {
+            adocFile.delete()
+        }
     }
 
     private void generatePDF(File adocFile) {
@@ -131,7 +137,7 @@ cli.with {
     t(longOpt: 'title', type: String, 'title of the document. If omitted, filename -o is used')
     p(longOpt: 'paths', args: '+', valueSeparator: ',', 'directories to search for the files')
     r(longOpt: 'recursive', 'recurse sub-directories')
-    _(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation')
+    k(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation')
 }
 def requiredOptions = ['e', 'o']
 
@@ -156,7 +162,7 @@ for (def option : requiredOptions) {
 // Build printer
 PricPDFPrinter printer = new PricPDFPrinter(
         extensions: options.es, outputFilename: options.o, title: options.t ?: '',
-        paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.keepAsciidoc,
+        paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.k,
         ext2type: ext2type
 )
 
