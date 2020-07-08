@@ -180,6 +180,30 @@ PricPDFPrinter printer = new PricPDFPrinter(
 
 printer.print()
 
+// Helper logger class
+class Logger {
+    static boolean enabled = true
+    final static String INFO = 'INFO'
+    final static String WARNING = 'WARNING'
+    final static String ERROR = 'ERROR'
+
+    private static String noticeTemplate(String notice) { "[ $notice ]" }
+
+    private static void log(String notice, String msg, PrintStream stream) {
+        if (enabled) stream.println("${noticeTemplate(notice)} $msg")
+    }
+
+    static void info(String msg) {
+        log(INFO, msg, System.out)
+    }
+    static void warn(String msg) {
+        log(WARNING, msg, System.err)
+    }
+    static void error(String msg) {
+        log(ERROR, msg, System.err)
+    }
+}
+
 // Helper class required to support the include directive
 class CharBasedIncludeProcessor extends IncludeProcessor {
 
