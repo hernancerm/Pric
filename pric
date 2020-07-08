@@ -162,14 +162,16 @@ class PricPDFPrinter {
 // Define API
 CliBuilder cli = new CliBuilder(usage: 'Print multiple char-based files to a a single PDF')
 cli.with {
-    h(longOpt: 'help', 'usage information')
-    e(longOpt: 'extensions', args: '+', valueSeparator: ',', '[required] extensions of the files to be printed')
-    o(longOpt: 'output', type: String, '[required] output filename of the PDF')
-    t(longOpt: 'title', type: String, 'title of the document. If omitted, filename -o is used')
-    p(longOpt: 'paths', args: '+', valueSeparator: ',', 'directories to search for the files')
-    r(longOpt: 'recursive', 'recurse sub-directories')
-    k(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation')
-    s(longOpt: 'silent', 'do not show log messages')
+    h(longOpt: 'help', 'usage information.')
+    e(longOpt: 'extensions', args: '+', argName: 'extensions', valueSeparator: ',', '[required] comma separated ' +
+            'extensions of the files to be printed, without the dot. E.g.: java,yml,md.')
+    o(longOpt: 'output', type: String, argName: 'filename', '[required] output filename of the PDF, must end in .pdf.')
+    t(longOpt: 'title', type: String, argName: 'title', 'title of the document. If omitted, filename is used.')
+    p(longOpt: 'paths', args: '+', valueSeparator: ',', argName: 'dirs', 'comma separated absolute or relative ' +
+            'paths to directories to search for the files.')
+    r(longOpt: 'recursive', 'recurse sub-directories.')
+    k(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation.')
+    s(longOpt: 'silent', 'do not show log messages.')
 }
 def requiredOptions = ['e', 'o']
 
