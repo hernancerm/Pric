@@ -105,7 +105,6 @@ class PricPDFPrinter {
         StringBuilder header = new StringBuilder("= ${title ?: filenameNoExt}\n")
         if (author) { header.append(":author: $author").append('\n') }
         header.append(':doctype: book').append('\n')
-        header.append('\n')
 
         adocFile.withWriter('utf-8') { writer ->
             writer.write(header.toString())
@@ -152,14 +151,13 @@ class PricPDFPrinter {
 
                         matched++
                         adocFile.withWriterAppend('utf-8') { writer ->
-                            writer.writeLine("""\
+                            writer.writeLine("""
                             == [small]#$file.name#
                             [%autofit]
                             [source,${ext2type[fileExtension] ?: 'text'}]
                             ----
                             include::$file.absolutePath[]
-                            ----
-                            """.stripIndent())
+                            ----""".stripIndent())
                         }
                     }
                 }
