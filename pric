@@ -139,7 +139,8 @@ class PricPDFPrinter {
                         matchedFiles++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""\
-                            === $file.name
+                            == [small]#$file.name#
+                            [%autofit]
                             [source,${ext2type[fileExtension] ?: 'text'}]
                             ----
                             include::$file.absolutePath[]
