@@ -52,6 +52,7 @@ class PricPDFPrinter {
     List<String> extensions
     String outputFilename
     String title
+    String author
     List<String> paths
     boolean recursive
     boolean keepAsciidoc
@@ -99,9 +100,18 @@ class PricPDFPrinter {
 
         // Create AsciiDoc file
         File adocFile = new File("${filenameNoExt}.adoc")
-        // Set file title
-        adocFile.write("= ${title ?: filenameNoExt}\n\n")
 
+        // Set file title, author and doctype
+        StringBuilder header = new StringBuilder("= ${title ?: filenameNoExt}\n")
+        if (author) { header.append(":author: $author").append('\n') }
+        header.append(':doctype: book').append('\n')
+        header.append('\n')
+
+        adocFile.withWriter('utf-8') { writer ->
+            writer.write(header.toString())
+        }
+
+        // Add include directives
         includeFilesInAdoc(recursive, paths ?: ['.'], adocFile)
         return adocFile
     }
@@ -168,6 +178,7 @@ cli.with {
             'extensions of the files to be printed, without the dot. E.g.: java,yml,md.')
     o(longOpt: 'output', type: String, argName: 'filename', '[required] output filename of the PDF, must end in .pdf.')
     t(longOpt: 'title', type: String, argName: 'title', 'title of the document. If omitted, filename is used.')
+    a(longOpt: 'author', type: String, argName: 'author', 'author of the document.')
     p(longOpt: 'paths', args: '+', valueSeparator: ',', argName: 'dirs', 'comma separated absolute or relative ' +
             'paths to directories to search for the files.')
     r(longOpt: 'recursive', 'recurse sub-directories.')
@@ -196,7 +207,7 @@ for (def option : requiredOptions) {
 
 // Build printer
 PricPDFPrinter printer = new PricPDFPrinter(
-        extensions: options.es, outputFilename: options.o, title: options.t ?: '',
+        extensions: options.es, outputFilename: options.o, title: options.t ?: '', author: options.a ?: '',
         paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.k,
         ext2type: ext2type
 )
