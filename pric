@@ -163,6 +163,7 @@ cli.with {
     p(longOpt: 'paths', args: '+', valueSeparator: ',', 'directories to search for the files')
     r(longOpt: 'recursive', 'recurse sub-directories')
     k(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation')
+    s(longOpt: 'silent', 'do not show log messages')
 }
 def requiredOptions = ['e', 'o']
 
@@ -190,12 +191,14 @@ PricPDFPrinter printer = new PricPDFPrinter(
         paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.k,
         ext2type: ext2type
 )
+// Configure logger
+Logger.silent = options.s
 
-printer.print()
+printer.print() // Do all the hard work.
 
 // Helper logger class
 class Logger {
-    static boolean enabled = true
+    static boolean silent = false
     final static String INFO = 'INFO'
     final static String WARNING = 'WARNING'
     final static String ERROR = 'ERROR'
@@ -203,7 +206,7 @@ class Logger {
     private static String noticeTemplate(String notice) { "[$notice]" }
 
     private static void log(String notice, String msg, PrintStream stream) {
-        if (enabled) stream.println("${noticeTemplate(notice)} $msg")
+        if (!silent) stream.println("${noticeTemplate(notice)} $msg")
     }
 
     static void info(String msg) {
