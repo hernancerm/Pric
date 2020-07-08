@@ -104,17 +104,21 @@ class PricPDFPrinter {
     }
 
     private void includeFilesInAdoc(boolean recursive, List<String> paths, File adocFile) {
+        int matchedFiles = 0 // Keep track of how many files match the extensions supplied
+
         for (String path : paths) {
 
             File dir = new File(path)
-            // Fail if path does not exist
+            // Skip non-existent path
             if (!dir.exists()) {
-                Logger.error('One or more paths supplied do not exist. ' +
-                        'Verify the value of the option -p.')
-                System.exit(1)
+                Logger.warn("Non existent supplied path... skipping $dir.absolutePath")
+                continue
             }
-
-            int matchedFiles = 0
+            // Skip if is not directory
+            if (!dir.isDirectory()) {
+                Logger.warn("Supplied path is not a directory... skipping $dir.absolutePath")
+                continue
+            }
 
             // Iterate files and build adoc file
             dir.eachFile { file ->
@@ -139,12 +143,12 @@ class PricPDFPrinter {
                     }
                 }
             }
+        }
 
-            if (matchedFiles == 0) {
-                Logger.info('No files were found. Check the values of -e and -p (if supplied).')
-                adocFile.delete()
-                System.exit(2)
-            }
+        if (matchedFiles == 0) {
+            Logger.info('No files were found. Check the values of -e and -p (if supplied).')
+            adocFile.delete()
+            System.exit(2)
         }
     }
 }
