@@ -107,10 +107,15 @@ class PricPDFPrinter {
     }
 
     private void includeFilesInAdoc(boolean recursive, List<String> paths, File adocFile) {
-        int matchedFiles = 0 // Keep track of how many files match the extensions supplied
+        if (includeFilesInAdocHelper(recursive, paths, adocFile, 0) == 0) {
+            Logger.info('No files were found. Check the values of -e and -p (if supplied).')
+            adocFile.delete()
+            System.exit(2)
+        }
+    }
 
+    private int includeFilesInAdocHelper(boolean recursive, List<String> paths, File adocFile, int matched) {
         for (String path : paths) {
-
             File dir = new File(path)
             // Skip non-existent path
             if (!dir.exists()) {
@@ -125,8 +130,8 @@ class PricPDFPrinter {
 
             // Iterate files and build adoc file
             dir.eachFile { file ->
-                if (file.isDirectory() && recursive) {
-                    includeFilesInAdoc(recursive, [file.getPath()], adocFile)
+                if (file.isDirectory() && !file.name.startsWith('.') && recursive) {
+                    matched = includeFilesInAdocHelper(recursive, [file.path], adocFile, matched)
                 }
                 if (!file.isDirectory()) {
                     def partedFilename = file.name.split('[.]')
@@ -135,7 +140,7 @@ class PricPDFPrinter {
                     if (fileExtension in extensions) {
                         Logger.info("Adding to output file: $file.absolutePath")
 
-                        matchedFiles++
+                        matched++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""\
                             == [small]#$file.name#
@@ -151,11 +156,7 @@ class PricPDFPrinter {
             }
         }
 
-        if (matchedFiles == 0) {
-            Logger.info('No files were found. Check the values of -e and -p (if supplied).')
-            adocFile.delete()
-            System.exit(2)
-        }
+        return matched
     }
 }
 
