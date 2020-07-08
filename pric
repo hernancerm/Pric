@@ -43,7 +43,6 @@ Map<String, String> ext2type = [
         // Typesetting
         tex: 'latex',
         md: 'markdown',
-        adoc: 'asciidoc',
         // Low level
         c: 'c'
 ]
