@@ -35,21 +35,29 @@ import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric', mixinStandardHelpOptions = true, version = '1.0')
 class Pric implements Callable<Void> {
-    @Option(names = ['-e', '--extensions'], description = 'Extensions of the files to be printed.', required = true)
+    @Option(names = ['-e', '--extensions'], split = ',',
+            description = 'Extensions of the files to be printed.', required = true)
     List<String> extensions
-    @Option(names = ['-o', '--output'], description = 'Output filename of the PDF, must end in .pdf.', required = true)
+    @Option(names = ['-o', '--output'],
+            description = 'Output filename of the PDF, must end in .pdf.', required = true)
     String outputFilename
-    @Option(names = ['-t', '--title'], description = 'Title of the document. If omitted, filename is used.')
-    String title = ''
-    @Option(names = ['-a', '--author'], description = 'Author of the document.')
-    String author = ''
-    @Option(names = ['-p', '--paths'], description = 'Absolute or relative paths to directories to search for files.')
-    List<String> paths = []
-    @Option(names = ['-r', '--recursive'], description = 'Recurse sub-directories.')
+    @Option(names = ['-t', '--title'],
+            description = 'Title of the document. If omitted, filename is used.')
+    String title
+    @Option(names = ['-a', '--author'],
+            description = 'Author of the document.')
+    String author
+    @Option(names = ['-p', '--paths'], split = ',',
+            description = "Absolute or relative paths to directories to search for files (default is '.')")
+    List<String> paths = ['.']
+    @Option(names = ['-r', '--recursive'],
+            description = 'Recurse sub-directories.')
     boolean recursive
-    @Option(names = ['-k', '--keep-asciidoc'], description = 'Preserve Asciidoc file after PDF generation.')
+    @Option(names = ['-k', '--keep-asciidoc'],
+            description = 'Preserve Asciidoc file after PDF generation.')
     boolean keepAsciidoc
-    @Option(names = ['-s', '--silent'], description = 'Do not show log messages.')
+    @Option(names = ['-s', '--silent'],
+            description = 'Do not show log messages.')
     boolean loggerSilent
 
     def ext2type = [
@@ -145,7 +153,7 @@ class PricPDFPrinter {
         }
 
         // Add include directives
-        includeFilesInAdoc(pric.recursive, pric.paths ?: ['.'], adocFile)
+        includeFilesInAdoc(pric.recursive, pric.paths, adocFile)
         return adocFile
     }
 
