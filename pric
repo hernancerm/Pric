@@ -24,7 +24,9 @@ import picocli.CommandLine.Command
 import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
 import picocli.CommandLine.ArgGroup
-import java.util.concurrent.Callable;
+
+import java.util.concurrent.Callable
+import java.util.regex.Pattern
 
 import org.asciidoctor.*
 import org.asciidoctor.extension.*
@@ -33,11 +35,10 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-@Command(name = 'pric', mixinStandardHelpOptions = true, version = '0.1.0')
+@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.2.0')
 class Pric implements Callable<Void> {
-    @Option(names = ['-e', '--extensions'], split = ',',
-            description = 'Extensions of the files to be printed.', required = true)
-    List<String> extensions
+    @ArgGroup(exclusive = true, multiplicity = '1')
+    FilesFilter filesFilter
     @Parameters(index = '0', arity = '1',
             description = 'Output filename of the PDF, must end in .pdf.')
     String outputFilename
@@ -61,6 +62,15 @@ class Pric implements Callable<Void> {
     boolean loggerSilent
     @Option(names = ['-c', '--compact'], description = 'Produce a PDF with less pages.')
     boolean compact
+
+    static class FilesFilter {
+        @Option(names = ['-e', '--extensions'], split = ',',
+                description = 'Extensions of the files to be printed.', required = true)
+        List<String> extensions
+        @Option(names = ['-f', '--files'], split = ',',
+                description = 'Match filenames by regex.')
+        List<Pattern> patterns
+    }
 
     def ext2type = [
             // Backend
@@ -189,9 +199,8 @@ class PricPDFPrinter {
                 }
                 if (!file.isDirectory()) {
                     def partedFilename = file.name.split('[.]')
-                    String fileExtension =
-                            partedFilename.size() > 1 ? partedFilename[1] : ''
-                    if (fileExtension in pric.extensions) {
+                    String fileExtension = partedFilename.size() > 1 ? partedFilename[1] : ''
+                    if (fileMatches(file.name, fileExtension)) {
                         logger.info("Adding to output file: $file.absolutePath")
 
                         matched++
@@ -210,6 +219,21 @@ class PricPDFPrinter {
         }
 
         return matched
+    }
+
+    private boolean fileMatches(String filename, String fileExtension) {
+        boolean matches = false
+
+        if (pric.filesFilter.extensions) {
+            matches = fileExtension in filename
+        }
+        if (pric.filesFilter.patterns) {
+            pric.filesFilter.patterns.each { pattern ->
+                if ((filename =~ pattern).matches()) matches = true
+            }
+        }
+
+        return matches
     }
 }
 
