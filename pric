@@ -104,6 +104,7 @@ class PricPDFPrinter {
         // Set file title, author and doctype
         StringBuilder header = new StringBuilder("= ${title ?: filenameNoExt}\n")
         if (author) { header.append(":author: $author").append('\n') }
+        header.append(':source-highlighter: coderay').append('\n')
         header.append(':doctype: book').append('\n')
 
         adocFile.withWriter('utf-8') { writer ->
@@ -119,7 +120,7 @@ class PricPDFPrinter {
         if (includeFilesInAdocHelper(recursive, paths, adocFile, 0) == 0) {
             Logger.info('No files were found. Check the values of -e and -p (if supplied).')
             adocFile.delete()
-            System.exit(2)
+            System.exit(0)
         }
     }
 
