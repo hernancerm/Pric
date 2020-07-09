@@ -38,8 +38,8 @@ class Pric implements Callable<Void> {
     @Option(names = ['-e', '--extensions'], split = ',',
             description = 'Extensions of the files to be printed.', required = true)
     List<String> extensions
-    @Option(names = ['-o', '--output'],
-            description = 'Output filename of the PDF, must end in .pdf.', required = true)
+    @Parameters(index = '0', arity = '1',
+            description = 'Output filename of the PDF, must end in .pdf.')
     String outputFilename
     @Option(names = ['-t', '--title'],
             description = 'Title of the document. If omitted, filename is used.')
