@@ -17,8 +17,14 @@
 
 @Grab(group='org.asciidoctor', module='asciidoctorj', version='2.3.0')
 @Grab(group='org.asciidoctor', module='asciidoctorj-pdf', version='1.5.3')
+@Grab(group='info.picocli', module='picocli', version='4.4.0')
 
-import groovy.cli.commons.CliBuilder
+import picocli.CommandLine
+import picocli.CommandLine.Command
+import picocli.CommandLine.Option
+import picocli.CommandLine.Parameters
+import picocli.CommandLine.ArgGroup
+import java.util.concurrent.Callable;
 
 import org.asciidoctor.*
 import org.asciidoctor.extension.*
@@ -27,43 +33,70 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-Map<String, String> ext2type = [
-        // Backend
-        java: 'java',
-        groovy: 'groovy',
-        php: 'php',
-        py: 'python',
-        // Frontend
-        js: 'javascript',
-        html: 'html',
-        css: 'css',
-        // Scripting
-        bat: 'batch',
-        sh: 'bash',
-        // Typesetting
-        tex: 'latex',
-        md: 'markdown',
-        // Low level
-        c: 'c'
-]
+@Command(name = 'pric', mixinStandardHelpOptions = true, version = '1.0')
+class Pric implements Callable<Void> {
+    @Option(names = ['-e', '--extensions'], description = 'Extensions of the files to be printed.', required = true)
+    List<String> extensions
+    @Option(names = ['-o', '--output'], description = 'Output filename of the PDF, must end in .pdf.', required = true)
+    String outputFilename
+    @Option(names = ['-t', '--title'], description = 'Title of the document. If omitted, filename is used.')
+    String title = ''
+    @Option(names = ['-a', '--author'], description = 'Author of the document.')
+    String author = ''
+    @Option(names = ['-p', '--paths'], description = 'Absolute or relative paths to directories to search for files.')
+    List<String> paths = []
+    @Option(names = ['-r', '--recursive'], description = 'Recurse sub-directories.')
+    boolean recursive
+    @Option(names = ['-k', '--keep-asciidoc'], description = 'Preserve Asciidoc file after PDF generation.')
+    boolean keepAsciidoc
+    @Option(names = ['-s', '--silent'], description = 'Do not show log messages.')
+    boolean loggerSilent
+
+    def ext2type = [
+            // Backend
+            java: 'java',
+            groovy: 'groovy',
+            php: 'php',
+            py: 'python',
+            // Frontend
+            js: 'javascript',
+            html: 'html',
+            css: 'css',
+            // Scripting
+            bat: 'batch',
+            sh: 'bash',
+            // Typesetting
+            tex: 'latex',
+            md: 'markdown',
+            // Low level
+            c: 'c'
+    ]
+
+    @Override
+    Void call() throws Exception {
+        // Configure PDF printer
+        PricPDFPrinter printer = new PricPDFPrinter(
+                pric: this,
+                logger: new Logger(silent: loggerSilent))
+        printer.print() // Generate files
+    }
+
+    static void main (String... args) {
+        new CommandLine(new Pric()).execute(args)
+        System.exit(0) // Exit with code 0
+    }
+}
 
 class PricPDFPrinter {
-    // CLI options
-    List<String> extensions
-    String outputFilename
-    String title
-    String author
-    List<String> paths
-    boolean recursive
-    boolean keepAsciidoc
-
-    // Helper data
-    Map<String, String> ext2type
+    // Options and parameters bindings
+    Pric pric
+    // Logger
+    Logger logger
 
     void print() {
         // Check the file passed by -o has .pdf extension
-        if (!outputFilename.endsWith('.pdf')) {
-            Logger.error('File name supplied by -o is not a PDF file. ' +
+        if (!pric.outputFilename.endsWith('.pdf')) {
+            logger.error('File name supplied by -o is not a PDF file. ' +
                     'Verify the filename has extension \'.pdf\'.')
             System.exit(1)
         }
@@ -72,7 +105,7 @@ class PricPDFPrinter {
         generatePDF(adocFile)
 
         // Conditional cleanup
-        if (!keepAsciidoc) {
+        if (!pric.keepAsciidoc) {
             adocFile.delete()
         }
     }
@@ -87,23 +120,23 @@ class PricPDFPrinter {
         Attributes attributes = attributes().sourceHighlighter('coderay').get()
         Options options = options().inPlace(true).backend('pdf').attributes(attributes).get()
 
-        Logger.info('Generating PDF, please wait...')
+        logger.info('Generating PDF, please wait...')
 
         asciidoctor.convertFile(adocFile, options)
 
-        Logger.info('Successful PDF generation.')
+        logger.info('Successful PDF generation.')
     }
 
     private File buildAdocFile() {
         // Filename without extension
-        String filenameNoExt = outputFilename.split('[.]')[0]
+        String filenameNoExt = pric.outputFilename.split('[.]')[0]
 
         // Create AsciiDoc file
         File adocFile = new File("${filenameNoExt}.adoc")
 
         // Set file title, author and doctype
-        StringBuilder header = new StringBuilder("= ${title ?: filenameNoExt}\n")
-        if (author) { header.append(":author: $author").append('\n') }
+        StringBuilder header = new StringBuilder("= ${pric.title ?: filenameNoExt}\n")
+        if (pric.author) { header.append(":author: $pric.author").append('\n') }
         header.append(':source-highlighter: coderay').append('\n')
         header.append(':doctype: book').append('\n')
 
@@ -112,13 +145,13 @@ class PricPDFPrinter {
         }
 
         // Add include directives
-        includeFilesInAdoc(recursive, paths ?: ['.'], adocFile)
+        includeFilesInAdoc(pric.recursive, pric.paths ?: ['.'], adocFile)
         return adocFile
     }
 
     private void includeFilesInAdoc(boolean recursive, List<String> paths, File adocFile) {
         if (includeFilesInAdocHelper(recursive, paths, adocFile, 0) == 0) {
-            Logger.info('No files were found. Check the values of -e and -p (if supplied).')
+            logger.info('No files were found. Check the values of -e and -p (if supplied).')
             adocFile.delete()
             System.exit(0)
         }
@@ -129,12 +162,12 @@ class PricPDFPrinter {
             File dir = new File(path)
             // Skip non-existent path
             if (!dir.exists()) {
-                Logger.warn("Non existent supplied path... skipping $dir.absolutePath")
+                logger.warn("Non existent supplied path... skipping $dir.absolutePath")
                 continue
             }
             // Skip if is not directory
             if (!dir.isDirectory()) {
-                Logger.warn("Supplied path is not a directory... skipping $dir.absolutePath")
+                logger.warn("Supplied path is not a directory... skipping $dir.absolutePath")
                 continue
             }
 
@@ -147,15 +180,15 @@ class PricPDFPrinter {
                     def partedFilename = file.name.split('[.]')
                     String fileExtension =
                             partedFilename.size() > 1 ? partedFilename[1] : ''
-                    if (fileExtension in extensions) {
-                        Logger.info("Adding to output file: $file.absolutePath")
+                    if (fileExtension in pric.extensions) {
+                        logger.info("Adding to output file: $file.absolutePath")
 
                         matched++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""
                             == [small]#$file.name#
                             [%autofit]
-                            [source,${ext2type[fileExtension] ?: 'text'}]
+                            [source,${pric.ext2type[fileExtension] ?: 'text'}]
                             ----
                             include::$file.absolutePath[]
                             ----""".stripIndent())
@@ -169,72 +202,26 @@ class PricPDFPrinter {
     }
 }
 
-// Define API
-CliBuilder cli = new CliBuilder(usage: 'Print multiple char-based files to a a single PDF')
-cli.with {
-    h(longOpt: 'help', 'usage information.')
-    e(longOpt: 'extensions', args: '+', argName: 'extensions', valueSeparator: ',', '[required] comma separated ' +
-            'extensions of the files to be printed, without the dot. E.g.: java,yml,md.')
-    o(longOpt: 'output', type: String, argName: 'filename', '[required] output filename of the PDF, must end in .pdf.')
-    t(longOpt: 'title', type: String, argName: 'title', 'title of the document. If omitted, filename is used.')
-    a(longOpt: 'author', type: String, argName: 'author', 'author of the document.')
-    p(longOpt: 'paths', args: '+', valueSeparator: ',', argName: 'dirs', 'comma separated absolute or relative ' +
-            'paths to directories to search for the files.')
-    r(longOpt: 'recursive', 'recurse sub-directories.')
-    k(longOpt: 'keep-asciidoc', 'preserve Asciidoc file after PDF generation.')
-    s(longOpt: 'silent', 'do not show log messages.')
-}
-def requiredOptions = ['e', 'o']
-
-// Parse command line arguments
-def options = cli.parse(args)
-
-// Print help message
-if (options.h) {
-    cli.usage()
-    System.exit(0)
-}
-
-// Required options check
-for (def option : requiredOptions) {
-    if (!options[option]) {
-        Logger.error('Missing one or more required options.')
-        cli.usage()
-        System.exit(0)
-    }
-}
-
-// Build printer
-PricPDFPrinter printer = new PricPDFPrinter(
-        extensions: options.es, outputFilename: options.o, title: options.t ?: '', author: options.a ?: '',
-        paths: options.ps ?: [], recursive: options.r, keepAsciidoc: options.k,
-        ext2type: ext2type
-)
-// Configure logger
-Logger.silent = options.s
-
-printer.print() // Do all the hard work.
-
 // Helper logger class
 class Logger {
-    static boolean silent = false
+    boolean silent = false
     final static String INFO = 'INFO'
     final static String WARNING = 'WARNING'
     final static String ERROR = 'ERROR'
 
     private static String noticeTemplate(String notice) { "[$notice]" }
 
-    private static void log(String notice, String msg, PrintStream stream) {
+    private void log(String notice, String msg, PrintStream stream) {
         if (!silent) stream.println("${noticeTemplate(notice)} $msg")
     }
 
-    static void info(String msg) {
+    void info(String msg) {
         log(INFO, msg, System.out)
     }
-    static void warn(String msg) {
+    void warn(String msg) {
         log(WARNING, msg, System.err)
     }
-    static void error(String msg) {
+    void error(String msg) {
         log(ERROR, msg, System.err)
     }
 }
