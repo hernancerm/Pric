@@ -92,13 +92,39 @@ class Pric implements Callable<Void> {
             c: 'c'
     ]
 
+    private Closure<Boolean> matchStrategy() {
+        def strategy = { false }
+
+        if (filesFilter.extensions) {
+            strategy = { filename, fileExtension -> fileExtension in filesFilter.extensions }
+        }
+        if (filesFilter.patterns) {
+            strategy = {
+                filename, fileExtension -> {
+                    boolean matches = false
+                    for (def pattern : filesFilter.patterns) {
+                        if ((filename =~ pattern).matches()) {
+                            matches = true
+                            break
+                        }
+                    }
+                    return matches
+                }
+            }
+        }
+
+        return strategy
+    }
+
     @Override
     Void call() throws Exception {
         // Configure PDF printer
         PricPDFPrinter printer = new PricPDFPrinter(
                 pric: this,
-                logger: new Logger(silent: loggerSilent))
+                logger: new Logger(silent: loggerSilent),
+                matchStrategy: matchStrategy())
         printer.print() // Generate files
+        return new Void()
     }
 
     static void main (String... args) {
@@ -112,6 +138,8 @@ class PricPDFPrinter {
     Pric pric
     // Logger
     Logger logger
+    // Filename match strategy
+    Closure<Boolean> matchStrategy
 
     void print() {
         // Check the file passed by -o has .pdf extension
@@ -200,7 +228,7 @@ class PricPDFPrinter {
                 if (!file.isDirectory()) {
                     def partedFilename = file.name.split('[.]')
                     String fileExtension = partedFilename.size() > 1 ? partedFilename[1] : ''
-                    if (fileMatches(file.name, fileExtension)) {
+                    if (matchStrategy.call(file.name, fileExtension)) {
                         logger.info("Adding to output file: $file.absolutePath")
 
                         matched++
@@ -219,21 +247,6 @@ class PricPDFPrinter {
         }
 
         return matched
-    }
-
-    private boolean fileMatches(String filename, String fileExtension) {
-        boolean matches = false
-
-        if (pric.filesFilter.extensions) {
-            matches = fileExtension in filename
-        }
-        if (pric.filesFilter.patterns) {
-            pric.filesFilter.patterns.each { pattern ->
-                if ((filename =~ pattern).matches()) matches = true
-            }
-        }
-
-        return matches
     }
 }
 
