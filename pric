@@ -33,7 +33,7 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-@Command(name = 'pric', mixinStandardHelpOptions = true, version = '1.0')
+@Command(name = 'pric', mixinStandardHelpOptions = true, version = '0.1.0')
 class Pric implements Callable<Void> {
     @Option(names = ['-e', '--extensions'], split = ',',
             description = 'Extensions of the files to be printed.', required = true)
@@ -59,6 +59,8 @@ class Pric implements Callable<Void> {
     @Option(names = ['-s', '--silent'],
             description = 'Do not show log messages.')
     boolean loggerSilent
+    @Option(names = ['-c', '--compact'], description = 'Produce a PDF with less pages.')
+    boolean compact
 
     def ext2type = [
             // Backend
@@ -146,7 +148,8 @@ class PricPDFPrinter {
         StringBuilder header = new StringBuilder("= ${pric.title ?: filenameNoExt}\n")
         if (pric.author) { header.append(":author: $pric.author").append('\n') }
         header.append(':source-highlighter: coderay').append('\n')
-        header.append(':doctype: book').append('\n')
+        if (!pric.compact) { header.append(':doctype: book').append('\n') }
+        else if (pric.author) { header.append('\n[.text-center]\n{author}\n') }
 
         adocFile.withWriter('utf-8') { writer ->
             writer.write(header.toString())
@@ -194,7 +197,7 @@ class PricPDFPrinter {
                         matched++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""
-                            == [small]#$file.name#
+                            ${ pric.compact ? ".$file.name" : "== [small]#$file.name#"}
                             [%autofit]
                             [source,${pric.ext2type[fileExtension] ?: 'text'}]
                             ----
