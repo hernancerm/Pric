@@ -35,7 +35,7 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.2.0')
+@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.3.0')
 class Pric implements Callable<Void> {
     @ArgGroup(exclusive = true, multiplicity = '1')
     FilesFilter filesFilter
@@ -202,7 +202,7 @@ class PricPDFPrinter {
         if (includeFilesInAdocHelper(recursive, paths, adocFile, 0) == 0) {
             logger.info('No files were found. Check the values of -e and -p (if supplied).')
             adocFile.delete()
-            System.exit(0)
+            System.exit(1)
         }
     }
 
