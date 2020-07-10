@@ -35,11 +35,11 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.3.0')
+@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.4.0')
 class Pric implements Callable<Void> {
     @ArgGroup(exclusive = true, multiplicity = '1')
     FilesFilter filesFilter
-    @Parameters(index = '0', arity = '1',
+    @Parameters(index = '0',
             description = 'Output filename of the PDF, must end in .pdf.')
     String outputFilename
     @Option(names = ['-t', '--title'],
@@ -48,7 +48,7 @@ class Pric implements Callable<Void> {
     @Option(names = ['-a', '--author'],
             description = 'Author of the document.')
     String author
-    @Option(names = ['-p', '--paths'], split = ',',
+    @Option(names = ['-p', '--paths'], split = '[?]',
             description = "Absolute or relative paths to directories to search for files (default is '.')")
     List<String> paths = ['.']
     @Option(names = ['-r', '--recursive'],
@@ -67,7 +67,7 @@ class Pric implements Callable<Void> {
         @Option(names = ['-e', '--extensions'], split = ',',
                 description = 'Extensions of the files to be printed.', required = true)
         List<String> extensions
-        @Option(names = ['-f', '--files'], split = ',',
+        @Option(names = ['-f', '--files'], split = ':',
                 description = 'Match filenames by regex.')
         List<Pattern> patterns
     }
@@ -211,12 +211,12 @@ class PricPDFPrinter {
             File dir = new File(path)
             // Skip non-existent path
             if (!dir.exists()) {
-                logger.warn("Non existent supplied path... skipping $dir.absolutePath")
+                logger.warn("Non existent path, skipping: $dir.absolutePath")
                 continue
             }
             // Skip if is not directory
             if (!dir.isDirectory()) {
-                logger.warn("Supplied path is not a directory... skipping $dir.absolutePath")
+                logger.warn("Path is not a directory, skipping: $dir.absolutePath")
                 continue
             }
 
