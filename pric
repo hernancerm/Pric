@@ -35,7 +35,7 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.4.0')
+@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.5.0')
 class Pric implements Callable<Void> {
     @ArgGroup(exclusive = true, multiplicity = '1')
     FilesFilter filesFilter
@@ -236,7 +236,7 @@ class PricPDFPrinter {
                             writer.writeLine("""
                             ${ pric.compact ? ".$file.name" : "== [small]#$file.name#"}
                             [%autofit]
-                            [source,${pric.ext2type[fileExtension] ?: 'text'}]
+                            [source,${pric.ext2type[fileExtension] ?: 'text'},subs="macros"]
                             ----
                             include::$file.absolutePath[]
                             ----""".stripIndent())
@@ -274,24 +274,27 @@ class Logger {
     }
 }
 
-// Helper class required to support the include directive
+// Helper class used to substitute the regular output of the 'include' preprocessor directive.
+// By default, the include directive adds the lines of the specified files into the current document.
+// However, IF the file has certain extensions,
+//     (check the extensions here: https://asciidoctor.org/docs/user-manual/#include-nonasciidoc)
+// then Asciidoctor allows recursive includes to be applied. For the purpose of this script I do NOT
+// want that. Moreover, if a file has a line matching '----', irrelevant to its extension, the output
+// of the code listing is broken. To prevent this I pass through every line of each included file with
+// the 'pass:' macro, as seen in the readContent method. Albeit not an elegant solution, it works.
 class CharBasedIncludeProcessor extends IncludeProcessor {
-
     CharBasedIncludeProcessor(Map<String, Object> config) { super(config) }
-
-    @Override
-    // Handling of accepted file types is done in PricPDFPrinter, thus everything
-    // is considered acceptable at this point.
-    boolean handles(String target) { return true }
+    @Override boolean handles(String target) { return true }
 
     @Override
     void process(org.asciidoctor.ast.Document document, PreprocessorReader reader,
                  String target, Map<String, Object> attributes) {
-        StringBuilder content = readContent(target)
-        reader.push_include(content.toString(), target, target, 1, attributes)
+        reader.push_include(readContent(target).toString(), target, target, 1, attributes)
     }
 
     private StringBuilder readContent(String target) {
-        new StringBuilder(new File(target).text)
+        StringBuilder builder = new StringBuilder()
+        new File(target).eachLine { line -> builder.append("pass:[$line]\n") }
+        return builder
     }
 }
