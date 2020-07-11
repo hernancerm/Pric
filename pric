@@ -65,7 +65,7 @@ class Pric implements Callable<Void> {
 
     static class FilesFilter {
         @Option(names = ['-e', '--extensions'], split = ',',
-                description = 'Extensions of the files to be printed.', required = true)
+                description = 'Extensions of the files to be printed.')
         List<String> extensions
         @Option(names = ['-f', '--files'], split = ':',
                 description = 'Match filenames by regex.')
