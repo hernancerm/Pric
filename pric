@@ -1,5 +1,4 @@
 #!/usr/bin/env groovy
-
 /* Copyright 2020 Hernán José Cervera Manzanilla
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,12 +34,32 @@ import static org.asciidoctor.Asciidoctor.Factory.create
 import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
-@Command(name = 'pric', mixinStandardHelpOptions = true, version = 'pric 0.5.0')
+@Command(name = 'pric',
+        version = 'pric 0.6.0',
+        mixinStandardHelpOptions = true,
+        headerHeading = '%n',
+        header = 'Print multiple source code files to a single PDF file.',
+        customSynopsis = [
+                'pric @|yellow <file>|@ (@|yellow -e|@ <ext>[,<ext>...] | @|yellow -f|@ <regex>[:<regex>...]) [OPTIONS]'
+        ],
+        synopsisHeading = '%n',
+        parameterListHeading = '%nParameters:%n',
+        optionListHeading = '%nOptions:%n',
+        exitCodeListHeading = '%nExit codes:%n',
+        exitCodeList = [
+                '0: Successful PDF generation.',
+                '1: No PDF was generated.'
+        ],
+        footerHeading = '%nExamples:%n',
+        footer = 'Print to out.pdf all Java and XML files on the current dir and its sub-dirs.%n' +
+            '@|yellow pric out.pdf -re java,xml|@' +
+            '%n%nPrint to out.pdf all Markdown files and the LICENSE file found on the current directory.%n' +
+            '@|yellow pric out.pdf -f \'LICENSE:.*[.]md\'|@')
 class Pric implements Callable<Void> {
     @ArgGroup(exclusive = true, multiplicity = '1')
     FilesFilter filesFilter
-    @Parameters(index = '0',
-            description = 'Output filename of the PDF, must end in .pdf.')
+    @Parameters(index = '0', paramLabel = 'file',
+            description = "Filename of the PDF, must end in '.pdf'.")
     String outputFilename
     @Option(names = ['-t', '--title'],
             description = 'Title of the document. If omitted, filename is used.')
@@ -48,14 +67,15 @@ class Pric implements Callable<Void> {
     @Option(names = ['-a', '--author'],
             description = 'Author of the document.')
     String author
-    @Option(names = ['-p', '--paths'], split = '[?]',
-            description = "Absolute or relative paths to directories to search for files (default is '.')")
+    @Option(names = ['-p', '--paths'], paramLabel = '<path>', split = '[?]', splitSynopsisLabel = '?',
+            description = 'Absolute or relative paths to directories to search for files ' +
+                    '(default is current directory)')
     List<String> paths = ['.']
     @Option(names = ['-r', '--recursive'],
             description = 'Recurse sub-directories.')
     boolean recursive
     @Option(names = ['-k', '--keep-asciidoc'],
-            description = 'Preserve Asciidoc file after PDF generation.')
+            description = 'Preserve AsciiDoc file after PDF generation.')
     boolean keepAsciidoc
     @Option(names = ['-s', '--silent'],
             description = 'Do not show log messages.')
@@ -64,10 +84,10 @@ class Pric implements Callable<Void> {
     boolean compact
 
     static class FilesFilter {
-        @Option(names = ['-e', '--extensions'], split = ',',
+        @Option(names = ['-e', '--extensions'], split = ',', paramLabel = '<ext>',
                 description = 'Extensions of the files to be printed.')
         List<String> extensions
-        @Option(names = ['-f', '--files'], split = ':',
+        @Option(names = ['-f', '--files'], split = ':', paramLabel = '<regex>',
                 description = 'Match filenames by regex.')
         List<Pattern> patterns
     }
@@ -129,7 +149,7 @@ class Pric implements Callable<Void> {
 
     static void main (String... args) {
         new CommandLine(new Pric()).execute(args)
-        System.exit(0) // Exit with code 0
+        System.exit(0)
     }
 }
 
