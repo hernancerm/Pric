@@ -35,7 +35,7 @@ import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric',
-        version = 'pric 0.6.0',
+        version = 'pric 0.7.0',
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
@@ -181,14 +181,11 @@ class PricPDFPrinter {
     private void generatePDF(File adocFile) {
         Asciidoctor asciidoctor = create()
 
-        // Add support for include directive
-        asciidoctor.javaExtensionRegistry()
-                .includeProcessor(CharBasedIncludeProcessor)
-
         Attributes attributes = attributes().sourceHighlighter('coderay').get()
-        Options options = options().inPlace(true).backend('pdf').attributes(attributes).get()
+        Options options = options().inPlace(true).safe(SafeMode.UNSAFE).backend('pdf')
+                .attributes(attributes).get()
 
-        logger.info('Generating PDF, please wait...')
+        logger.info('Generating PDF...')
 
         asciidoctor.convertFile(adocFile, options)
 
@@ -249,14 +246,14 @@ class PricPDFPrinter {
                     def partedFilename = file.name.split('[.]')
                     String fileExtension = partedFilename.size() > 1 ? partedFilename[1] : ''
                     if (matchStrategy.call(file.name, fileExtension)) {
-                        logger.info("Adding to output file: $file.absolutePath")
+                        logger.info("Adding to output: $file.absolutePath")
 
                         matched++
                         adocFile.withWriterAppend('utf-8') { writer ->
                             writer.writeLine("""
                             ${ pric.compact ? ".$file.name" : "== [small]#$file.name#"}
                             [%autofit]
-                            [source,${pric.ext2type[fileExtension] ?: 'text'},subs="macros"]
+                            [source,${pric.ext2type[fileExtension] ?: 'text'}]
                             ----
                             include::$file.absolutePath[]
                             ----""".stripIndent())
@@ -291,30 +288,5 @@ class Logger {
     }
     void error(String msg) {
         log(ERROR, msg, System.err)
-    }
-}
-
-// Helper class used to substitute the regular output of the 'include' preprocessor directive.
-// By default, the include directive adds the lines of the specified files into the current document.
-// However, IF the file has certain extensions,
-//     (check the extensions here: https://asciidoctor.org/docs/user-manual/#include-nonasciidoc)
-// then Asciidoctor allows recursive includes to be applied. For the purpose of this script I do NOT
-// want that. Moreover, if a file has a line matching '----', irrelevant to its extension, the output
-// of the code listing is broken. To prevent this I pass through every line of each included file with
-// the 'pass:' macro, as seen in the readContent method. Albeit not an elegant solution, it works.
-class CharBasedIncludeProcessor extends IncludeProcessor {
-    CharBasedIncludeProcessor(Map<String, Object> config) { super(config) }
-    @Override boolean handles(String target) { return true }
-
-    @Override
-    void process(org.asciidoctor.ast.Document document, PreprocessorReader reader,
-                 String target, Map<String, Object> attributes) {
-        reader.push_include(readContent(target).toString(), target, target, 1, attributes)
-    }
-
-    private StringBuilder readContent(String target) {
-        StringBuilder builder = new StringBuilder()
-        new File(target).eachLine { line -> builder.append("pass:[$line]\n") }
-        return builder
     }
 }
