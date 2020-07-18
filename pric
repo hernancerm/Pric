@@ -54,7 +54,7 @@ import static org.asciidoctor.OptionsBuilder.options
         footer = 'Print to out.pdf all Java and XML files on the current dir and its sub-dirs.%n' +
             '@|yellow pric out.pdf -re java,xml|@' +
             '%n%nPrint to out.pdf all Markdown files and the LICENSE file found on the current directory.%n' +
-            '@|yellow pric out.pdf -f \'LICENSE:.*[.]md\'|@')
+            '@|yellow pric out.pdf -f \'LICENSE:.*[.]md\'|@%n')
 class Pric implements Callable<Void> {
     @ArgGroup(exclusive = true, multiplicity = '1')
     FilesFilter filesFilter
