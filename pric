@@ -35,7 +35,7 @@ import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric',
-        version = 'pric 0.7.0',
+        version = 'pric 0.8.0',
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
@@ -185,7 +185,7 @@ class PricPDFPrinter {
         Options options = options().inPlace(true).safe(SafeMode.UNSAFE).backend('pdf')
                 .attributes(attributes).get()
 
-        logger.info('Generating PDF...')
+        logger.info("Generating PDF: ${adocFile.absolutePath.replaceAll('[.]adoc', '.pdf')}")
 
         asciidoctor.convertFile(adocFile, options)
 
@@ -194,20 +194,26 @@ class PricPDFPrinter {
 
     private File buildAdocFile() {
         // Filename without extension
-        String filenameNoExt = pric.outputFilename.split('[.]')[0]
+        String filePathNoExtension = pric.outputFilename.replaceAll(/[.]\w+/, '')
+        String basename = (filePathNoExtension =~ /[\w\d!,\s;()$%&#¿'{}\[\]~_`+-]+$/).findAll()[0]
 
         // Create AsciiDoc file
-        File adocFile = new File("${filenameNoExt}.adoc")
+        File adocFile = new File("${filePathNoExtension}.adoc")
 
         // Set file title, author and doctype
-        StringBuilder header = new StringBuilder("= ${pric.title ?: filenameNoExt}\n")
+        StringBuilder header = new StringBuilder("= ${pric.title ?: basename}\n")
         if (pric.author) { header.append(":author: $pric.author").append('\n') }
         header.append(':source-highlighter: coderay').append('\n')
         if (!pric.compact) { header.append(':doctype: book').append('\n') }
         else if (pric.author) { header.append('\n[.text-center]\n{author}\n') }
 
-        adocFile.withWriter('utf-8') { writer ->
-            writer.write(header.toString())
+        try {
+            adocFile.withWriter('utf-8') { writer ->
+                writer.write(header.toString())
+            }
+        } catch (FileNotFoundException e) {
+            logger.error("A directory in the supplied path $pric.outputFilename does not exist.")
+            System.exit(1)
         }
 
         // Add include directives
