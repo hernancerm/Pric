@@ -1,56 +1,49 @@
-# pric - print code to PDF
+# 👨🏻‍💻 Pric: Print Code
 
-I once had a college course where we were required to deliver our code in PDF format. It was a pain to copy/paste it manually to produce the document, and even attempting to use LaTeX required some setup. This tool seeks to help anyone in a similar situation.
+The goal of this tool is to provide an easy and fast way to produce a PDF out of a set of code files.
 
-## An example is worth a thousand words
+## Usage
 
-Take this directory structure. Lets say I want to put the Java files under `src/main` in a PDF.
+Given the following project, we can generate a PDF out of the Java files.
 
 ```
-$ pwd
-/c/Users/hjcer/Documents/temp/Forrec
+.
+`-- src
+    |-- META-INF
+    |   `-- MANIFEST.MF
+    `-- hercerm
+        `-- iindices
+            |-- app
+            |   |-- ApplicationStarter.java
+            |   `-- WordSearcherApplication.java
+            |-- core
+            |   |-- FileContentCleanser.java
+            |   |-- IIValue.java
+            |   |-- IIndexGenerator.java
+            |   |-- REPL.java
+            |   |-- REPLCommands.java
+            |   |-- TXTCleanser.java
+            |   `-- WordSearcher.java
+            `-- util
+                |-- FileDownloader.java
+                |-- PathsAccessor.java
+                `-- Serializer.java
 
-$ tree src
-src
-|-- main
-|   |-- java
-|   |   `-- hercerm
-|   |       `-- net
-|   |           |-- Entry.java
-|   |           |-- Forwarder.java
-|   |           |-- Message.java
-|   |           |-- Peer.java
-|   |           `-- Receiver.java
-|   `-- resources
-|       `-- META-INF
-|           `-- MANIFEST.MF
-`-- test
-    `-- java
-        |-- Client.java
-        |-- Playground.java
-        `-- Server.java
-
-8 directories, 9 files
 ```
 
-To generate the PDF run the following:
+To create the PDF, simply run:
 
 ```bash
- pric homework-1.pdf -e java -p src/main -ra 'Hernán Cervera' -t 'Forrec: A mini-framework'
+pric output_file.pdf -re java
 ```
 
-Which produces `homework-1.pdf`, with a cover page, ToC (table of contents) shown by the PDF reader and syntax highlighted code listings.
+Which produces `output_file.pdf`, with a cover page, syntax highlighted code listings and a table of contents shown by the PDF reader:
 
 <p align="center">
-    <img width=900px src="images/non_compact_demo.png">
+    <img width=720px src="images/non_compact_demo.png">
 </p>
 
-## Options, parameters and exit codes
-
-Worthy to mention:
-
-- If you would like to further customize the PDF, for example by adding a paragraph or some other information, you can use `--keep-asciidoc` to preserve the AsciiDoc file and manually edit it as you will. Then it is simple to generate your PDF by using [`asciidoctor-pdf`](https://github.com/asciidoctor/asciidoctor-pdf#install-the-published-gem).
-- By default, the PDF generated has one file per page. If you are dealing with many small files, this might not be ideal. The `--compact` option generates a PDF with no cover page, no ToC (unfortunately), and attempts to place more files per page.
+## Options
 
 ```
 $ pric -h
@@ -92,6 +85,9 @@ directory.
 pric out.pdf -f 'LICENSE:.*[.]md'
 ```
 
+- By default, the PDF generated has one file per page. If you are dealing with many small files, this might not be ideal. The `--compact` option generates a PDF with no cover page, no ToC, and attempts to place more files per page.
+- If you would like to further customize the PDF, for example by adding a paragraph or some other information, you can use `--keep-asciidoc` to preserve the AsciiDoc file and manually edit it as you will. Then it is simple to generate your PDF by using [`asciidoctor-pdf`](https://github.com/asciidoctor/asciidoctor-pdf#install-the-published-gem).
+
 ## Requirements
 
 - Groovy 3
@@ -101,7 +97,7 @@ pric out.pdf -f 'LICENSE:.*[.]md'
 
 ### Linux
 
-Download [pric](pric) and provide execution permission:
+Download **[Pric](./pric)** and provide execution permission:
 
 ```
 chmod +x pric
@@ -111,16 +107,6 @@ To have the script globally available, copy it to `/usr/local/bin`.
 
 ### Windows
 
-1. Make sure you have a shell that supports Bash, e.g. [Git Bash](https://gitforwindows.org/).
-2. Download [pric](pric) to your machine and you are done.
+1. Make sure you have a shell which supports Bash, e.g. [Git Bash](https://gitforwindows.org/).
+2. Download **[Pric](./pric)** and you are done.
 3. (Optional but recommended) Make the script globally available by configuring your `PATH` environment variable.
-
-## Known issues
-
-Please note that this is not a finished project and certainly has bugs. The issues I have been able to find are mostly related to incorrectly displaying file contents in the PDF.
-
-Some issues I found:
-
-- `WARNING: An illegal...` is always thrown by a dependency, however this doesn't have an impact on the output.
-- Files that have a line containing **only** the characters `----`  produce unwanted code listings in the PDF.
-- Files which absolute path contain `[]` can't be found.
