@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-@Grab(group='org.asciidoctor', module='asciidoctorj', version='2.3.0')
+@Grab(group='org.asciidoctor', module='asciidoctorj', version='2.4.0')
 @Grab(group='org.asciidoctor', module='asciidoctorj-pdf', version='1.5.3')
 @Grab(group='info.picocli', module='picocli', version='4.4.0')
 
@@ -24,7 +24,6 @@ import picocli.CommandLine.Option
 import picocli.CommandLine.Parameters
 import picocli.CommandLine.ArgGroup
 
-import java.util.concurrent.Callable
 import java.util.regex.Pattern
 
 import org.asciidoctor.*
@@ -35,7 +34,7 @@ import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric',
-        version = 'pric 0.8.0',
+        version = 'pric 1.0.0',
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
@@ -55,7 +54,7 @@ import static org.asciidoctor.OptionsBuilder.options
             '@|yellow pric out.pdf -re java,xml|@' +
             '%n%nPrint to out.pdf all Markdown files and the LICENSE file found on the current directory.%n' +
             '@|yellow pric out.pdf -f \'LICENSE:.*[.]md\'|@%n')
-class Pric implements Callable<Void> {
+class Pric implements Runnable {
     @ArgGroup(exclusive = true, multiplicity = '1')
     FilesFilter filesFilter
     @Parameters(index = '0', paramLabel = 'file',
@@ -137,14 +136,13 @@ class Pric implements Callable<Void> {
     }
 
     @Override
-    Void call() throws Exception {
+    void run() {
         // Configure PDF printer
         PricPDFPrinter printer = new PricPDFPrinter(
                 pric: this,
                 logger: new Logger(silent: loggerSilent),
                 matchStrategy: matchStrategy())
         printer.print() // Generate files
-        return new Void()
     }
 
     static void main (String... args) {
