@@ -34,7 +34,7 @@ import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric',
-        version = 'pric 1.0.0',
+        version = 'pric 1.0.1',
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
@@ -97,18 +97,25 @@ class Pric implements Runnable {
             groovy: 'groovy',
             php: 'php',
             py: 'python',
+            rb: 'ruby',
+            clj: 'clojure',
+            go: 'go',
+            lua: 'lua',
             // Frontend
             js: 'javascript',
             html: 'html',
             css: 'css',
-            // Scripting
-            bat: 'batch',
-            sh: 'bash',
-            // Typesetting
-            tex: 'latex',
-            md: 'markdown',
+            cljs: 'clojure',
+            // Markup
+            xml: 'xml',
+            json: 'json',
+            yml: 'yaml',
+            yaml: 'yaml',
+            // Query
+            sql: 'sql',
             // Low level
-            c: 'c'
+            c: 'c',
+            cpp: 'c++'
     ]
 
     private Closure<Boolean> matchStrategy() {
