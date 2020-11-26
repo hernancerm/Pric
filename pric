@@ -34,7 +34,7 @@ import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric',
-        version = 'pric 1.1.0',
+        version = 'pric 1.1.1',
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
@@ -47,11 +47,29 @@ import static org.asciidoctor.OptionsBuilder.options
                 '0: Successful PDF generation.',
                 '1: No PDF was generated.'
         ],
+
+        // Pric example uses
         footerHeading = '%nExamples:%n',
-        footer = 'Print to out.pdf all Java and XML files on the current dir and its sub-dirs.%n' +
-            '@|yellow pric out.pdf -re java,xml|@' +
-            '%n%nPrint to out.pdf all Markdown files and the LICENSE file found on the current directory.%n' +
-            '@|yellow pric out.pdf -f \'LICENSE:.*[.]md\'|@%n')
+        footer = """\
+Notice that the default title of every document is the provided filename
+(in the examples below, the title of most documents is 'out'). To set an
+appropriate title different from the filename, use the option -t, as shown
+in the example 3.
+
+1. Include all Java and XML files on the current dir and its sub-dirs.
+@|yellow pric out.pdf -r -e java,xml|@
+
+2. Include all Markdown files and the LICENSE file found on the current directory.
+@|yellow pric out.pdf -e md -f 'LICENSE'|@
+Notice the single quotes around LICENSE. Always use single quotes around the
+arg value of -f, to avoid the shell from evaluating the expression.
+
+3. Include all SQL files in current dir and add cover page with title and author.
+@|yellow pric out.pdf -e sql -a 'Hernan Cervera' -t 'Database design'|@
+
+4. Include all SQL files in current dir and remove cover page from PDF.
+@|yellow pric out.pdf -e sql -c|@ 
+""")
 class Pric implements Runnable {
     @ArgGroup(exclusive = false, multiplicity = '1')
     FilesFilter filesFilter
@@ -65,8 +83,7 @@ class Pric implements Runnable {
             description = 'Author of the document.')
     String author
     @Option(names = ['-p', '--paths'], paramLabel = '<path>', split = '[?]', splitSynopsisLabel = '?',
-            description = 'Absolute or relative paths to directories to search for files ' +
-                    '(default is current directory)')
+            description = 'Absolute or relative paths to directories to search for files (default is current dir)')
     List<String> paths = ['.']
     @Option(names = ['-r', '--recursive'],
             description = 'Recurse sub-directories.')
@@ -77,7 +94,7 @@ class Pric implements Runnable {
     @Option(names = ['-s', '--silent'],
             description = 'Do not show log messages.')
     boolean loggerSilent
-    @Option(names = ['-c', '--compact'], description = 'Produce a PDF with less pages.')
+    @Option(names = ['-c', '--compact'], description = 'Produce a PDF with more code per page and no cover page.')
     boolean compact
 
     static class FilesFilter {
