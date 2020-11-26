@@ -38,10 +38,8 @@ import static org.asciidoctor.OptionsBuilder.options
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
-        customSynopsis = [
-                'pric @|yellow <file>|@ (@|yellow -e|@ <ext>[,<ext>...] | @|yellow -f|@ <regex>[:<regex>...]) [OPTIONS]'
-        ],
         synopsisHeading = '%n',
+        abbreviateSynopsis = true,
         parameterListHeading = '%nParameters:%n',
         optionListHeading = '%nOptions:%n',
         exitCodeListHeading = '%nExit codes:%n',
