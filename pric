@@ -34,7 +34,7 @@ import static org.asciidoctor.AttributesBuilder.attributes
 import static org.asciidoctor.OptionsBuilder.options
 
 @Command(name = 'pric',
-        version = 'pric 1.0.1',
+        version = 'pric 1.1.0',
         mixinStandardHelpOptions = true,
         headerHeading = '%n',
         header = 'Print multiple source code files to a single PDF file.',
@@ -53,7 +53,7 @@ import static org.asciidoctor.OptionsBuilder.options
             '%n%nPrint to out.pdf all Markdown files and the LICENSE file found on the current directory.%n' +
             '@|yellow pric out.pdf -f \'LICENSE:.*[.]md\'|@%n')
 class Pric implements Runnable {
-    @ArgGroup(exclusive = true, multiplicity = '1')
+    @ArgGroup(exclusive = false, multiplicity = '1')
     FilesFilter filesFilter
     @Parameters(index = '0', paramLabel = 'file',
             description = "Filename of the PDF, must end in '.pdf'.")
@@ -116,14 +116,15 @@ class Pric implements Runnable {
             cpp: 'c++'
     ]
 
-    private Closure<Boolean> matchStrategy() {
-        def strategy = { false }
+    private List<Closure<Boolean>> matchStrategies() {
+        List<Closure<Boolean>> strategies = new ArrayList<>();
 
         if (filesFilter.extensions) {
-            strategy = { filename, fileExtension -> fileExtension in filesFilter.extensions }
+            Closure<Boolean> strategy = { filename, fileExtension -> fileExtension in filesFilter.extensions }
+            strategies.add(strategy)
         }
         if (filesFilter.patterns) {
-            strategy = {
+            Closure<Boolean> strategy = {
                 filename, fileExtension -> {
                     boolean matches = false
                     for (def pattern : filesFilter.patterns) {
@@ -135,9 +136,10 @@ class Pric implements Runnable {
                     return matches
                 }
             }
+            strategies.add(strategy)
         }
 
-        return strategy
+        return strategies
     }
 
     @Override
@@ -146,7 +148,7 @@ class Pric implements Runnable {
         PricPDFPrinter printer = new PricPDFPrinter(
                 pric: this,
                 logger: new Logger(silent: loggerSilent),
-                matchStrategy: matchStrategy())
+                matchStrategies: matchStrategies())
         printer.print() // Generate files
     }
 
@@ -161,8 +163,8 @@ class PricPDFPrinter {
     Pric pric
     // Logger
     Logger logger
-    // Filename match strategy
-    Closure<Boolean> matchStrategy
+    // Filename match strategies
+    List<Closure<Boolean>> matchStrategies
 
     void print() {
         // Check the file passed by -o has .pdf extension
@@ -254,18 +256,22 @@ class PricPDFPrinter {
                 if (!file.isDirectory()) {
                     def partedFilename = file.name.split('[.]')
                     String fileExtension = partedFilename.size() > 1 ? partedFilename[1] : ''
-                    if (matchStrategy.call(file.name, fileExtension)) {
-                        logger.info("Adding to output: $file.absolutePath")
 
-                        matched++
-                        adocFile.withWriterAppend('utf-8') { writer ->
-                            writer.writeLine("""
+                    for (Closure<Boolean> strategy : matchStrategies) {
+                        if (strategy.call(file.name, fileExtension)) {
+                            logger.info("Adding to output: $file.absolutePath")
+
+                            matched++
+                            adocFile.withWriterAppend('utf-8') { writer ->
+                                writer.writeLine("""
                             ${ pric.compact ? ".$file.name" : "== [small]#$file.name#"}
                             [%autofit]
                             [source,${pric.ext2type[fileExtension] ?: 'text'}]
                             ----
                             include::$file.absolutePath[]
                             ----""".stripIndent())
+                            }
+                            break
                         }
                     }
                 }
